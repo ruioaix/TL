@@ -5,12 +5,12 @@
 
 enum SIDE {LEFT, RIGHT};
 enum TYPE {INT, DOUBLE, CSTRING};
-enum NETA {DIRECTED, UNDIRECTED, WEIGHTED, UNWEIGHTED, CROSSOVER, NONCROSSOVER};
+enum ATTR {DIRECTED, UNDIRECTED, WEIGHTED, UNWEIGHTED, CROSSOVER, NONCROSSOVER};
 
 char *trueorfalse(bool b);
 char *leftorright(enum SIDE s);
 char *whichtype(enum TYPE t);
-char *whatnetattr(enum NETA a);
+char *whatnetattr(enum ATTR a);
 
 void *malloc_safe(size_t size, const char *filename, const int lineNum);
 void *calloc_safe(size_t num, size_t size, const char *filename, const int lineNum);

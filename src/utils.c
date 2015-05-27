@@ -17,7 +17,7 @@ char *whichtype(enum TYPE t) {
 	else return "NO-IDEA";
 }
 
-char *whatnetattr(enum NETA a) {
+char *whatnetattr(enum ATTR a) {
 	if (a == DIRECTED) return "Directed";
 	else if (a == UNDIRECTED) return "Undirected";
 	else if (a == WEIGHTED) return "Weighted";
