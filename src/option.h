@@ -4,35 +4,26 @@
 #include <stdbool.h>
 
 struct OPTION {
-	bool alg_mass;
-	bool alg_heats;
-	bool alg_hybrid;
-	double rate_hybridparam;
-	bool alg_HNBI;
-	double rate_hnbiparam;
-	bool alg_massd;
-	double rate_massdparam;
-	bool alg_masssc;
-	double rate_massscparam;
-	bool alg_masssct;
-	double rate_masssctparam;
-
-	char *filename_full;
-	char *filename_train;
-	char *filename_test;
-	char *filename_leftobjectattr;
-
-	double rate_dividefulldataset;
-	int num_looptimes;
-	int num_toprightused2cmptmetrics;
+	char *logfilename;
 	unsigned long num_randomseed;
 
-	//
-	char *logfilename;
+	bool ds_line;
+	int num_line_node;
+	bool ds_lattice;
+	int num_lattice_side;
+	bool ds_crossover;
+	bool ds_direct;
+
+	int factor_constrain;
+
+	double rate_airedgeCost;
+	double rate_airedgeActualLength;
+	
+	bool alg_aspcoupling;
+	bool alg_aspgini;
 };
 
 struct OPTION *setOPTION(int argc, char **argv);
-int algnumOPTION(struct OPTION *op);
 void freeOPTION(struct OPTION *op);
 
 #endif

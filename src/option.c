@@ -7,91 +7,56 @@
 #include <getopt.h>
 
 static void display_usage(void) {
-	puts("BNRS - Bipart Network Recommemder System 1.0 (Apr 2015)\n");
-	puts("usage: bnrs [OPTION]\n");
+	puts("TL - Two Level Network. (May 2015)\n");
+	puts("usage: tl [OPTION]\n");
 	puts("OPTION common:");
 	puts("  -h:  help");
 	puts("  -o logfilename:");
 	puts("       File the log system will output log to");
-	puts("");
-	puts("OPTION privated to Algorithm:");
-	puts("  -m:  Calculate the result of mass algorithm");
-	puts("  -e:  Calculate the result of heats algorithm");
-	puts("  -H:  Calculate the result of hybrid algorithm");
-	puts("  --rate-hybrid doubleValue:  ");
-	puts("       Rate used in hybrid algorithm.");
-	puts("       only valid when -H option is used, otherwize this arg will be ignored.");
-	puts("       default: 0.2");
-	puts("  -N:  Calculate the result of HNBI algorithm");
-	puts("  --rate-HNBI doubleValue:  ");
-	puts("       Rate used in HNBI algorithm.");
-	puts("       only valid when -N option is used, otherwize this arg will be ignored.");
-	puts("       default: -0.8");
-	puts("  -D:  Calculate the result of mass degree algorithm");
-	puts("  --rate-mass-degree doubleValue:  ");
-	puts("       Rate used in mass score algorithm.");
-	puts("       only valid when -D option is used, otherwize this arg will be ignored.");
-	puts("       default: -0.8");
-	puts("  -S:  Calculate the result of mass score algorithm");
-	puts("  --rate-mass-score doubleValue:  ");
-	puts("       Rate used in mass score algorithm.");
-	puts("       only valid when -S option is used, otherwize this arg will be ignored.");
-	puts("       default: -0.8");
-	puts("  -w:  Calculate the result of mass score (only the third step) algorithm");
-	puts("  --rate-mass-score-third doubleValue:  ");
-	puts("       Rate used in mass score (only the third step algorithm.");
-	puts("       only valid when -w option is used, otherwize this arg will be ignored.");
-	puts("       default: -0.8");
-	puts("");
-	puts("OPTION common to Algorithms:");
-	puts("  -i filename:");
-	puts("       File containing full dataset");
-	puts("       if -i is used, then -T and -t will be ignored.");
-	puts("       else, -T and -t both have to be present.");
-	puts("  -T filename:");
-	puts("       File containing train dataset");
-	puts("  -t filename:");
-	puts("       File containing test dataset");
-	puts("  -u filename:  ");
-	puts("       File containing extra attribute of the recommending objects");
-	puts("  -d doubleValue:  ");
-	puts("       Rate used to divide full dataset to train and test dataset");
-	puts("       only valid when -i option is used");
-	puts("  -l intValue:  ");
-	puts("       Number of times which the algorthim calculation need to be performed");
-	puts("       in order to get reasonable average result");
-	puts("  -L intValue:  ");
-	puts("       Number of the recommended objects which will be used to computer metrics");
 	puts("  -s unsignedlongValue: ");
 	puts("       Random seed");
+	puts("");
+	puts("OPTION:");
+	puts("  -l:  line dataset");
+	puts("  --num-line-node intValue:  ");
+	puts("       the number of the nodes in line dataset");
+	puts("  -L:  lattice dataset");
+	puts("  --num-lattice-side intValue:  ");
+	puts("       the number of the nodes in one lattice side");
+	puts("       so the number of the nodes in lattice is L^2");
+	puts("  -c:  net crossover, if not set, the net will be non-crossover by default");
+	puts("  -d:  net directed, if not set, the net will be undirected by default");
+	puts("  --factor-constrain intValue:  ");
+	puts("       this number * the number of nodes in net = constrain which will be used");
+	puts("  -C doubleValue:  ");
+	puts("       this value is used to define the cost of an edge from constrain.");
+	puts("       by default the cost of an edge is the length of the edge in ground net.");
+	puts("       that means the value by default to be 1. now the cost is length^theta, [0.5-2]");
+	puts("  -A doubleValue:  ");
+	puts("       this value is used to define the actual length ot the new edges.");
+	puts("       by default, the actual length is 1 (that means this value is default to be 0) but now it is length^value, [0-1].");
 	puts("");
 	exit(0);
 }
 
 static void init_OPTION(struct OPTION *op) {
 	op->logfilename = NULL;
-
-	op->alg_mass = false;
-	op->alg_heats = false;
-	op->alg_hybrid = false;
-	op->rate_hybridparam = 0.2;
-	op->alg_HNBI = false;
-	op->rate_hnbiparam = -0.8;
-	op->alg_massd = false;
-	op->rate_massdparam = 0.14;
-	op->alg_masssc = false;
-	op->rate_massscparam = 0.14;
-	op->alg_masssct = false;
-	op->rate_masssctparam = 0.14;
-
-	op->filename_full = NULL;
-	op->filename_train = NULL;
-	op->filename_test = NULL;
-	op->filename_leftobjectattr = NULL;
-	op->rate_dividefulldataset = 0.1;
-	op->num_looptimes = 1;
-	op->num_toprightused2cmptmetrics = 50;
 	op->num_randomseed= 1;
+
+	op->ds_line = false;
+	op->num_line_node = 100;
+	op->ds_lattice = false;
+	op->num_lattice_side = 50;
+	op->ds_crossover = false;
+	op->ds_direct = false;
+
+	op->factor_constrain = 5;
+	
+	//[0.5, 2]
+	op->rate_airedgeCost = 1.0;
+	//[0, 1]
+	op->rate_airedgeActualLength = 0;
+
 }
 
 void freeOPTION(struct OPTION *op) {
@@ -107,33 +72,22 @@ struct OPTION *setOPTION(int argc, char **argv) {
 	struct OPTION *op = smalloc(sizeof(struct OPTION));
 	init_OPTION(op);
 
-	static const char *short_options = "ho:meHNDSwi:T:t:u:d:l:L:s:";
+	static const char *short_options = "ho:s:lLcdC:A:";
 	struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
 		{"log-file", required_argument, NULL, 'o'},
-
-		{"alg-mass", no_argument, NULL, 'm'},
-		{"alg-heat", no_argument, NULL, 'e'},
-		{"alg-hybrid", no_argument, NULL, 'H'},
-		{"rate-hybrid", required_argument, NULL, 300},
-		{"alg-HNBI", no_argument, NULL, 'N'},
-		{"rate-HNBI", required_argument, NULL, 301},
-		{"alg-massd", no_argument, NULL, 'D'},
-		{"rate-mass-degree", required_argument, NULL, 304},
-		{"alg-masssc", no_argument, NULL, 'S'},
-		{"rate-mass-score", required_argument, NULL, 302},
-		{"alg-masssct", no_argument, NULL, 'w'},
-		{"rate-mass-score-third", required_argument, NULL, 303},
-
-		{"filename-full", required_argument, NULL, 'i'},
-		{"filename-train", required_argument, NULL, 'T'},
-		{"filename-test", required_argument, NULL, 't'},
-		{"filename-leftobjectattr", required_argument, NULL, 'u'},
-
-		{"rate-dividefulldataset", required_argument, NULL, 'd'},
-		{"num-looptimes", required_argument, NULL, 'l'},
-		{"num-toprightused2cmptmetrics", required_argument, NULL, 'L'},
 		{"num-randomseed", required_argument, NULL, 's'},
+
+		{"ds-line", no_argument, NULL, 'l'},
+		{"num-line-node", required_argument, NULL, 300},
+		{"ds-lattice", no_argument, NULL, 'L'},
+		{"num-lattice-side", required_argument, NULL, 301},
+		{"ds-crossover", no_argument, NULL, 'c'},
+		{"ds-direct", no_argument, NULL, 'd'},
+		{"factor-constrain", required_argument, NULL, 302},
+
+		{"rate-airedge-cost", required_argument, NULL, 'C'},
+		{"rate-airedge-actuallength", required_argument, NULL, 'A'},
 
 		{0, 0, 0, 0},
 	};
@@ -149,68 +103,37 @@ struct OPTION *setOPTION(int argc, char **argv) {
 			case 'o':
 				op->logfilename = optarg;
 				break;
-			case 'm':
-				op->alg_mass = true;
-				break;
-			case 'e':
-				op->alg_heats = true;
-				break;
-			case 'H':
-				op->alg_hybrid = true;
-				break;
-			case 300:
-				op->rate_hybridparam = strtod(optarg, NULL);
-				break;
-			case 'N':
-				op->alg_HNBI = true;
-				break;
-			case 301:
-				op->rate_hnbiparam = strtod(optarg, NULL);
-				break;
-			case 'D':
-				op->alg_massd = true;
-				break;
-			case 304:
-				op->rate_massdparam = strtod(optarg, NULL);
-				break;
-			case 'S':
-				op->alg_masssc = true;
-				break;
-			case 302:
-				op->rate_massscparam = strtod(optarg, NULL);
-				break;
-			case 'w':
-				op->alg_masssct = true;
-				break;
-			case 303:
-				op->rate_masssctparam = strtod(optarg, NULL);
-				break;
-			case 'i':
-				op->filename_full = optarg;
-				break;
-			case 'T':
-				op->filename_train = optarg;
-				break;
-			case 't':
-				op->filename_test = optarg;
-				break;
-			case 'u':
-				op->filename_leftobjectattr = optarg;
-				break;
-
-			case 'd':
-				op->rate_dividefulldataset = strtod(optarg, NULL);
-				break;
-			case 'l':
-				op->num_looptimes = strtol(optarg, NULL, 10);
-				break;
-			case 'L':
-				op->num_toprightused2cmptmetrics  = strtol(optarg, NULL, 10);
-				break;
 			case 's':
 				op->num_randomseed = strtol(optarg, NULL, 10);
 				break;
 
+			case 'l':
+				op->ds_line = true;
+				break;
+			case 300:
+				op->num_line_node = strtol(optarg, NULL, 10);
+				break;
+			case 'L':
+				op->ds_lattice = true;
+				break;
+			case 301:
+				op->num_lattice_side = strtol(optarg, NULL, 10);
+				break;
+			case 'c':
+				op->ds_crossover = true;
+				break;
+			case 'd':
+				op->ds_direct = true;
+				break;
+			case 302:
+				op->factor_constrain = strtol(optarg, NULL, 10);
+				break;
+			case 'C':
+				op->rate_airedgeCost = strtod(optarg, NULL);
+				break;
+			case 'A':
+				op->rate_airedgeActualLength = strtod(optarg, NULL);
+				break;
 			case '?':
 				break;
 			default:
@@ -228,97 +151,56 @@ struct OPTION *setOPTION(int argc, char **argv) {
 }
 
 static void verify_OPTION(struct OPTION *op) {
-	//algorithms
-	if (!( op->alg_mass || op->alg_heats || op->alg_hybrid || op->alg_HNBI || op->alg_masssc || op->alg_masssct || op->alg_massd)) {
-		LOG(LOG_FATAL, "no algorithms selected, what do you want to calculate?");
-	}
-
 	//dataset
-	if (op->filename_full == NULL && (op->filename_train == NULL || op->filename_test == NULL)) {
-		LOG(LOG_FATAL, "Dataset not enough, what do you want to calculate?");
+	if (!( op->ds_line || op->ds_lattice)) {
+		LOG(LOG_FATAL, "no dataset selected, what do you want to calculate?");
+	}
+	if (op->ds_line && op->ds_lattice) {
+		LOG(LOG_FATAL, "Sorry, for now you can only choose one kind of dataset: line or lattice.");
 	}
 
-	//rate_dividefulldataset
-	if (op->filename_full) {
-		if (op->rate_dividefulldataset <= 0 || op->rate_dividefulldataset >= 1) {
-			LOG(LOG_FATAL, "We will use the whole dataset file: %s, but why the divide_rate is %f?", op->filename_full , op->rate_dividefulldataset);
-		}
-		else {
-			op->filename_train = NULL;
-			op->filename_test = NULL;
-		}
-		//loopnum
-		if (op->num_looptimes < 1) {
-			LOG(LOG_FATAL, "Are you sure you want to set the loopNum to %d?", op->num_looptimes);
+	if (op->ds_line) {
+		if (op->num_line_node < 2) {
+			LOG(LOG_FATAL, "the nodes number of line dataset is set to %d, are you sure?", op->num_line_node);
 		}
 	}
-	else {
-		//loopnum
-		if (op->num_looptimes != 1) {
-			LOG(LOG_WARN, "Sorry, we can only loop for 1 time, not %d times, because you supply train and test dataset.", op->num_looptimes);
+	if (op->ds_lattice) {
+		if (op->num_lattice_side < 2) {
+			LOG(LOG_FATAL, "the side nodes number of lattice dataset is set to %d, are you sure?", op->num_lattice_side);
 		}
-		op->num_looptimes = 1;
 	}
 
-	//L
-	if (op->num_toprightused2cmptmetrics < 1) {
-		LOG(LOG_FATAL, "Are you sure you want to set the num of the top right objects which will be used to computer metrics to %d?", op->num_toprightused2cmptmetrics);
+	if (op->factor_constrain < 0) {
+		LOG(LOG_FATAL, "the constrain factor is set to %d, are you sure?", op->factor_constrain);
 	}
 
-	//hybrid
-	if (op->alg_hybrid && (op->rate_hybridparam < 1E-7 || op->rate_hybridparam > 1.0 + 1E-10) ) {
-		LOG(LOG_FATAL, "Are you sure you want to set the hybrid rate to %f?", op->rate_hybridparam);
+	if (op->rate_airedgeCost < 0.5 || op->rate_airedgeCost > 2) {
+		LOG(LOG_FATAL, "the rate_airedgeCost is set to %f, that's not valid, set to [0.5, 2].", op->rate_airedgeCost);
+	}
+
+	if (op->rate_airedgeActualLength < 0 || op->rate_airedgeActualLength > 1) {
+		LOG(LOG_FATAL, "the rate_airedgeActualLength is set to %f, that's not valid, set to [0, 1].", op->rate_airedgeActualLength);
 	}
 
 }
 
 static void info_OPTION(struct OPTION *op) {
-	LOG(LOG_INFO, "Algorithm:");
-	//option privated to alg
-	LOG(LOG_INFO, "  mass:    %s", trueorfalse(op->alg_mass));
-	LOG(LOG_INFO, "  heats:   %s", trueorfalse(op->alg_heats));
-	LOG(LOG_INFO, "  hybrid:  %s", trueorfalse(op->alg_hybrid));
-	if (op->alg_hybrid) {
-		LOG(LOG_INFO, "hybrid rate:  %f", op->rate_hybridparam);
+	if (op->ds_line) {
+		LOG(LOG_INFO, "line dataset: used");
+		LOG(LOG_INFO, "line ds, nodes number is %d", op->num_line_node);
 	}
-	LOG(LOG_INFO, "  HNBI:    %s", trueorfalse(op->alg_HNBI));
-	if (op->alg_HNBI) {
-		LOG(LOG_INFO, "HNBI rate:  %f", op->rate_hnbiparam);
-	}
-	LOG(LOG_INFO, "  massd:  %s", trueorfalse(op->alg_massd));
-	if (op->alg_massd) {
-		LOG(LOG_INFO, "massd rate:  %f", op->rate_massdparam);
-	}
-	LOG(LOG_INFO, "  masssc:  %s", trueorfalse(op->alg_masssc));
-	if (op->alg_masssc) {
-		LOG(LOG_INFO, "masssc rate:  %f", op->rate_massscparam);
-	}
-	LOG(LOG_INFO, "  masssct: %s", trueorfalse(op->alg_masssct));
-	if (op->alg_masssct) {
-		LOG(LOG_INFO, "masssct rate:  %f", op->rate_masssctparam);
+	if (op->ds_lattice) {
+		LOG(LOG_INFO, "lattice dataset: used");
+		LOG(LOG_INFO, "lattice ds, sides number is %d", op->num_lattice_side);
 	}
 
-	//option common to alg
-	if (op->filename_full) {
-		LOG(LOG_INFO, "Full dataset: %s", op->filename_full);
-		LOG(LOG_INFO, "Divide rate:  %f", op->rate_dividefulldataset);
-		LOG(LOG_INFO, "The num of loop times for each algorithm: %d", op->num_looptimes);
-	}
-	else {
-		LOG(LOG_INFO, "Train dataset: %s", op->filename_train);
-		LOG(LOG_INFO, "Test dataset:  %s", op->filename_test);
-		LOG(LOG_INFO, "The num of loop times for each algorithm: %d", op->num_looptimes);
-	}
-	LOG(LOG_INFO, "The num of top recommeded right objects: %d", op->num_toprightused2cmptmetrics);
-	LOG(LOG_INFO, "The seed of random number generater: %lu", op->num_randomseed);
-}
+	if (op->ds_crossover) LOG(LOG_INFO, "net will be crossover");
+	else LOG(LOG_INFO, "net will be non-crossover");
 
-int algnumOPTION(struct OPTION *op) {
-	return (int)(op->alg_mass) + \
-		(int)(op->alg_HNBI) + \
-		(int)(op->alg_heats) + \
-		(int)(op->alg_hybrid) + \
-		(int)(op->alg_massd) + \
-		(int)(op->alg_masssc) + \
-		(int)(op->alg_masssct);
+	if (op->ds_direct) LOG(LOG_INFO, "net will be directed");
+	else LOG(LOG_INFO, "net will be undirected");
+
+	LOG(LOG_INFO, "The constrain factor is %d", op->factor_constrain);
+	LOG(LOG_INFO, "The cost rate is %f", op->rate_airedgeCost);
+	LOG(LOG_INFO, "The actual length rate is %f", op->rate_airedgeActualLength);
 }
