@@ -17,6 +17,16 @@ char *whichtype(enum TYPE t) {
 	else return "NO-IDEA";
 }
 
+char *whatnetattr(enum NETA a) {
+	if (a == DIRECTED) return "Directed";
+	else if (a == UNDIRECTED) return "Undirected";
+	else if (a == WEIGHTED) return "Weighted";
+	else if (a == UNWEIGHTED) return "Unweighted";
+	else if (a == CROSSOVER) return "Crossover";
+	else if (a == NONCROSSOVER) return "Non-Crossover";
+	else return "NO-IDEA";
+}
+
 //memory 
 inline void *malloc_safe(size_t size, const char *filename, const int lineNum) {
 	if (size == 0) return NULL;

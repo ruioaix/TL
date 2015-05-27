@@ -6,17 +6,14 @@
 #define DATASET_H
 
 #include "linefile.h"
+#include "utils.h"
 
-enum DSATTR {
-	CROSSOVER, NONCROSSOVER,
-	DIRECT, NONDIRECT
-};
-struct DSATTRS {
-	enum DSATTR crossover;
-	enum DSATTR direct;
+struct DSATTR {
+	enum NETA crossover;
+	enum NETA direct;
 };
 
-struct LineFile * latticeDS(int L, struct DSATTRS dsas);
-struct LineFile * lineDS(int N, struct DSATTRS dsas);
+struct LineFile * latticeDS(int L, struct DSATTR dsa);
+struct LineFile * lineDS(int N, struct DSATTR dsa);
 
 #endif

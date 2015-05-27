@@ -17,27 +17,20 @@
  * 	non_crossover, 		direct: L*(L-1)*4
  * 	non_crossover,	non_direct: L*(L-1)*2
  */
-static char *humanreadDSATTR(enum DSATTR a) {
-	if (a == CROSSOVER) return "CROSSOVER";
-	else if (a == NONCROSSOVER) return "NONCROSSOVER";
-	else if (a == DIRECT) return "DIRECT";
-	else if (a == NONDIRECT) return "NONDIRECT";
-	else return "NOT-VALID-DS-ATTR";
-}
 
-struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
+struct LineFile * lattice2dDS(int L, struct DSATTR dsa) {
 	int N = L * L;
 
 	struct LineFile *file = createLF(NULL);
 	long linesNum = (L-1)*L*2;
-	if (dsas.crossover == CROSSOVER && L != 2) {
+	if (dsa.crossover == CROSSOVER && L != 2) {
 		linesNum += 2*L;
 	}
-	if (dsas.direct == DIRECT) {
+	if (dsa.direct == DIRECTED) {
 		linesNum *= 2;
 	}
 
-	LOG(LOG_INFO, "Generate 2D Lattice, %s, %s, L: %d, N: %d, linesNum: %ld\n", humanreadDSATTR(dsas.crossover), humanreadDSATTR(dsas.direct), L, N, linesNum);
+	LOG(LOG_INFO, "Generate 2D Lattice, %s, %s, L: %d, N: %d, linesNum: %ld\n", whatnetattr(dsa.crossover), whatnetattr(dsa.direct), L, N, linesNum);
 
 	int *i1 = smalloc(linesNum * sizeof(int));
 	int *i2 = smalloc(linesNum * sizeof(int));
@@ -50,7 +43,7 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
 			i1[k]=id;
 			i2[k]=id-1;	
 			++k;
-			if (dsas.direct == DIRECT) {
+			if (dsa.direct == DIRECTED) {
 				i2[k]=id;
 				i1[k]=id-1;	
 				++k;
@@ -58,7 +51,7 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
 			i1[k]=id;
 			i2[k]=id-L;
 			++k;
-			if (dsas.direct == DIRECT) {
+			if (dsa.direct == DIRECTED) {
 				i2[k]=id;
 				i1[k]=id-L;
 				++k;
@@ -70,7 +63,7 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
 		i1[k] = i;
 		i2[k] = i-1;
 		++k;
-		if (dsas.direct == DIRECT) {
+		if (dsa.direct == DIRECTED) {
 			i2[k] = i;
 			i1[k] = i-1;
 			++k;
@@ -78,18 +71,18 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
 		i1[k] = i*L;
 		i2[k] = i*L-L;
 		++k;
-		if (dsas.direct == DIRECT) {
+		if (dsa.direct == DIRECTED) {
 			i2[k] = i*L;
 			i1[k] = i*L-L;
 			++k;
 		}
 	}
-	if (dsas.crossover == CROSSOVER && L != 2) {
+	if (dsa.crossover == CROSSOVER && L != 2) {
 		for (i = 0; i < L; ++i) {
 			i1[k] = i;
 			i2[k] = i+(L-1)*L;
 			++k;
-			if (dsas.direct == DIRECT) {
+			if (dsa.direct == DIRECTED) {
 				i2[k] = i;
 				i1[k] = i+(L-1)*L;
 				++k;
@@ -97,7 +90,7 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
 			i1[k] = i*L;
 			i2[k] = i*L+L-1;
 			++k;
-			if (dsas.direct == DIRECT) {
+			if (dsa.direct == DIRECTED) {
 				i2[k] = i*L;
 				i1[k] = i*L+L-1;
 				++k;
@@ -132,16 +125,16 @@ struct LineFile * lattice2dDS(int L, struct DSATTRS dsas) {
  * 	non_crossover,	non_direct: N-1
  * 
  */
-struct LineFile * lineDS(int N, struct DSATTRS dsas) {
+struct LineFile * lineDS(int N, struct DSATTR dsa) {
 	if (N<2) LOG(LOG_FATAL, "N is %d, too small.", N);
 	
 	struct LineFile *file = createLF(NULL);
 
 	long linesNum = N-1;
-	if (dsas.crossover == CROSSOVER && N != 2) {
+	if (dsa.crossover == CROSSOVER && N != 2) {
 		linesNum += 1;
 	}
-	if (dsas.direct == DIRECT) {
+	if (dsa.direct == DIRECTED) {
 		linesNum *= 2;
 	}
 
@@ -154,17 +147,17 @@ struct LineFile * lineDS(int N, struct DSATTRS dsas) {
 		i1[k] = i;
 		i2[k] = i-1;
 		++k;
-		if (dsas.direct == DIRECT) {
+		if (dsa.direct == DIRECTED) {
 			i2[k] = i;
 			i1[k] = i-1;
 			++k;
 		}
 	}
-	if (dsas.crossover == CROSSOVER && N != 2) {
+	if (dsa.crossover == CROSSOVER && N != 2) {
 		i1[k] = 0;
 		i2[k] = N - 1;
 		++k;
-		if (dsas.direct == DIRECT) {
+		if (dsa.direct == DIRECTED) {
 			i2[k] = 0;
 			i1[k] = N - 1;
 			++k;
