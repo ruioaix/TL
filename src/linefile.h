@@ -22,6 +22,8 @@
 #ifndef LINEFILE_H 
 #define LINEFILE_H
 
+#include "utils.h"
+
 struct LineFile {
 	//private
 	int ***ilist;

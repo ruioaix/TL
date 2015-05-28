@@ -196,16 +196,16 @@ void printNET(NET *net, char *filename) {
 				for (k = 0; k < net->size; ++k) {
 					if (net->core[k]->rela) fprintf(fp, "\t%d", net->core[k]->rela[i][j]);
 					if (net->core[k]->aler) fprintf(fp, "\t%f", net->core[k]->aler[i][j]);
-					fprintf(fp, "\n");
 				}
+				fprintf(fp, "\n");
+				continue;
 			}
-			else if (net->attr.direct == DIRECTED) {
+			if (net->attr.direct == DIRECTED) {
 				for (k = 0; k < net->size; k += 2) {
 					if (net->core[k]->rela) fprintf(fp, "\t%d", net->core[k]->rela[i][j]);
 					if (net->core[k]->aler) fprintf(fp, "\t%f", net->core[k]->aler[i][j]);
-					fprintf(fp, "\n");
 				}
-
+				fprintf(fp, "\n");
 			}
 		}
 	}

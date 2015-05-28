@@ -1,6 +1,5 @@
 #include "log.h"
 #include "linefile.h"
-#include "utils.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
