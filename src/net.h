@@ -6,9 +6,11 @@
 #include "utils.h"
 #include "linefile.h"
 
+typedef struct CORE NETCORE;
+
 struct NET{
 	int size;
-	struct CORE **core;
+	NETCORE **core;
 	struct NETATTR attr;
 }; 
 
@@ -16,5 +18,6 @@ typedef struct NET NET;
 
 void freeNET(NET *net);
 NET *createNET(const struct LineFile * const file, struct NETATTR na);
+void printNET(NET *net, char *filename);
 
 #endif
